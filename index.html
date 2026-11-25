@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Integral Vision</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.2/math.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.2/plotly.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#0b1020;--panel:#131a2e;--line:#243052;--tx:#e6ebff;--mut:#8b97c0;--a:#4cc9f0;--b:#f72585;--ok:#06d6a0;--bad:#ff6b6b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.app{display:grid;grid-template-columns:210px 1fr;min-height:100vh}
+nav{background:var(--panel);border-inline-end:1px solid var(--line);padding:16px 12px}
+.logo{font-weight:800;letter-spacing:.5px;color:var(--a);margin-bottom:14px}.logo small{display:block;color:var(--mut);font-weight:400;font-size:11px}
+nav button{display:block;width:100%;text-align:start;background:none;border:0;color:var(--mut);padding:10px;border-radius:8px;margin-bottom:4px;font-size:14px}
+nav button.on{background:#1d2a4d;color:var(--tx)}nav button:disabled{opacity:.45}nav em{font-size:10px;display:block}
+main{padding:16px;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+h1{font-size:18px;margin:0}
+.grid{display:grid;grid-template-columns:280px 1fr;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+label{display:block;font-size:12px;color:var(--mut);margin:8px 0 3px}
+input{width:100%;background:#0b1226;border:1px solid var(--line);color:var(--tx);border-radius:8px;padding:9px;font-size:15px;font-family:ui-monospace,Menlo,monospace}
+.row{display:flex;gap:8px}.btn{background:var(--a);color:#001;border:0;border-radius:8px;padding:9px 12px;font-weight:700;margin-top:10px}
+.btn.s{background:#1d2a4d;color:var(--tx);margin-top:0}
+.err{color:var(--bad);font-size:13px;margin-top:8px}.warn{color:#ffd166;font-size:13px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px}.kv div{background:#0b1226;border-radius:8px;padding:8px;font-size:13px}.kv b{display:block;color:var(--a);font-size:15px;word-break:break-word}
+.step{padding:8px 0;border-bottom:1px dashed var(--line);font-size:14px}.step h4{margin:0 0 4px;color:var(--mut);font-size:12px;text-transform:uppercase}
+.t-ok{color:var(--ok)}.t-bad{color:var(--bad)}.test{font-size:13px;padding:3px 0}
+#plot{height:380px}#three{height:420px;position:relative;touch-action:none;border-radius:10px;overflow:hidden;background:#0b1226}[hidden]{display:none!important}table{border-collapse:collapse;font-size:12px;width:100%}td,th{border-bottom:1px solid var(--line);padding:6px;text-align:start;white-space:nowrap}th{color:var(--mut)}.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.chips.ops button{font-size:18px;padding:8px 14px;background:#2b3a6b;min-width:42px}.chips button{background:#1d2a4d;color:var(--tx);border:0;border-radius:6px;padding:6px 9px;font:13px ui-monospace,Menlo,monospace}td button{background:none;border:0;color:var(--bad)}select{background:#0b1226;color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:9px;width:100%}input[type=range]{padding:0}
+@media(max-width:820px){.app{grid-template-columns:1fr}nav{display:flex;overflow-x:auto;gap:6px;border-inline-end:0;border-bottom:1px solid var(--line)}.logo{display:none}nav button{white-space:nowrap;width:auto}.grid{grid-template-columns:1fr}}
+</style></head><body>
+<div class="app"><nav>
+<div class="logo">INTEGRAL VISION<small data-i="sub">Area &amp; Volume Laboratory</small></div>
+<button class="on" id="n1" data-i="m1">Area Between Curves</button>
+<button id="n2">3D Solid of Revolution</button>
+<button id="n3">Cross-Section Explorer</button>
+<button id="n4">Numerical Integration Lab</button>
+<button id="n5">Experiments &amp; Reports</button>
+</nav>
+<main><div id="diag" class="err" hidden style="margin-bottom:10px"></div><div class="top"><h1 id="h1" data-i="m1">Area Between Curves</h1><button class="btn s" id="lang">العربية</button></div>
+<div class="grid" id="v1"><div>
+<div class="card">
+<label>f(x)</label><input id="f" value="x^2" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+<label>g(x)</label><input id="g" value="x" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+<div class="row"><div><label>a</label><input id="a" autocapitalize="off" autocorrect="off" spellcheck="false" value="0"></div><div><label>b</label><input id="b" autocapitalize="off" autocorrect="off" spellcheck="false" value="2"></div></div>
+<button class="btn" id="go" data-i="calc">Compute</button> <button class="btn s" id="sv1">Save to Compare</button><div id="msg"></div></div>
+<div class="card"><b data-i="tests">Engine self-tests</b><div id="tests"></div></div></div>
+<div><div class="card"><div id="plot"></div></div>
+<div class="card"><div class="kv" id="res"></div></div>
+<div class="card"><b data-i="steps">Solution steps</b><div id="steps"></div></div></div></div>
+<div class="grid" id="v2" hidden><div><div class="card">
+<label>f(x)</label><input id="f2" value="x" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><label>g(x)</label><input id="g2" value="x^2" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+<div class="row"><div><label>a</label><input id="a2" autocapitalize="off" autocorrect="off" spellcheck="false" value="0"></div><div><label>b</label><input id="b2" autocapitalize="off" autocorrect="off" spellcheck="false" value="1"></div></div>
+<label>Axis of rotation</label><select id="ax"><option value="x">X-axis</option><option value="y">Y-axis</option></select>
+<label>Angle <span id="degv">360°</span></label><input type="range" id="deg" min="1" max="360" value="360">
+<label>Opacity</label><input type="range" id="op" min="10" max="100" value="55">
+<label><input type="checkbox" id="lay" checked style="width:auto"> Layers (disks / washers / shells)</label>
+<div class="row"><button class="btn" id="anim">Animate</button><button class="btn s" id="sv2" style="margin-top:10px">Save to Compare</button></div><div id="msg3"></div></div></div>
+<div><div class="card"><div id="three"></div></div><div class="card"><div class="kv" id="res3"></div></div>
+<div class="card" id="cs" hidden><label>Cutting-plane position x</label><input type="range" id="sx" min="0" max="1000" value="500"><div class="kv" id="res_cs" style="margin:10px 0"></div><div id="csplot"></div></div>
+<div class="card"><b data-i="steps">Solution steps</b><div id="steps3"></div></div></div></div>
+<div class="grid" id="v4" hidden><div><div class="card">
+<label>f(x)</label><input id="f4" value="sin(x)" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><div class="row"><div><label>a</label><input id="a4" autocapitalize="off" autocorrect="off" spellcheck="false" value="0"></div><div><label>b</label><input id="b4" autocapitalize="off" autocorrect="off" spellcheck="false" value="π"></div></div>
+<label>Method</label><select id="m4"><option value="left">Riemann sum (left)</option><option value="mid">Midpoint rule</option><option value="trap">Trapezoidal rule</option><option value="simp">Simpson’s rule</option></select>
+<label>Subdivisions n = <span id="nv4">8</span></label><input type="range" id="n4r" min="1" max="200" value="8"><button class="btn s" id="sv4" style="margin-top:10px">Save to Compare</button><div id="msg4"></div></div></div>
+<div><div class="card"><div id="nplot" style="height:340px"></div></div><div class="card"><div class="kv" id="res4"></div></div><div class="card"><b>Convergence (|error| vs n)</b><div id="cplot" style="height:260px"></div></div></div></div>
+<div class="grid" id="v5" hidden style="grid-template-columns:1fr"><div class="card"><b>Sample experiments</b><div id="samples"></div><b style="display:block;margin-top:12px">Verification against analytical references</b><div id="verif"></div><button class="btn s" id="runall" style="margin-top:8px">Re-verify</button></div>
+<div class="card"><b>Compare experiments</b><div id="cmp"></div><div id="cmpplot" style="height:280px"></div></div>
+<div class="card"><b>PDF report</b><label>Report title</label><input id="rt" value="Integral Vision - Experiment Report"><button class="btn" id="pdf">Generate PDF report</button><div id="pmsg"></div>
+<small style="color:var(--mut)">Includes the experiments computed in this session (area, solid, numerical lab) with plots, laws, steps, results and the saved comparison. English/ASCII text only.</small></div></div>
+</main></div>
+<script>
+"use strict";
+/* ================= MATH ENGINE (no eval of user text; whitelist AST) ================= */
+const Engine=(()=>{
+const FN=new Set("sin cos tan asin acos atan sinh cosh tanh exp log log10 log2 sqrt cbrt abs sec csc cot".split(" "));
+const SYM=new Set(["x","pi","e","tau"]);
+const OK=new Set(["ConstantNode","OperatorNode","ParenthesisNode","SymbolNode","FunctionNode"]);
+function compile(src){
+ if(!src||!src.trim())throw new Error("Empty expression");
+ const s=src.toLowerCase().replace(/\bln\b/g,"log").replace(/π/g,"pi").replace(/√/g,"sqrt").replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-");
+ const node=math.parse(s);
+ node.traverse(n=>{
+  if(!OK.has(n.type))throw new Error("Unsupported syntax in “"+src+"”");
+  if(n.type==="FunctionNode"&&!FN.has(n.fn.name))throw new Error("Unknown function: "+n.fn.name);
+  if(n.type==="SymbolNode"&&!SYM.has(n.name)&&!(n.parent&&0)){
+    // function-name symbols appear inside FunctionNode as fn; allow only if whitelisted
+    if(!FN.has(n.name))throw new Error("Unknown symbol: "+n.name);}
+ });
+ const code=node.compile();
+ const f=x=>{try{const v=code.evaluate({x});return typeof v==="number"&&isFinite(v)?v:NaN}catch(_){return NaN}};
+ f.tex=node.toTex();f.src=src;return f}
+function simpson(F,a,b,eps,w,fa,fm,fb,d){
+ const m=(a+b)/2,l=(a+m)/2,r=(m+b)/2,fl=F(l),fr=F(r);
+ if(!isFinite(fl)||!isFinite(fr))throw new Error("undefined");
+ const L=(m-a)/6*(fa+4*fl+fm),R=(b-m)/6*(fm+4*fr+fb),dlt=L+R-w;
+ if(d<=0||Math.abs(dlt)<=15*eps)return[L+R+dlt/15,Math.abs(dlt)/15];
+ const A=simpson(F,a,m,eps/2,L,fa,fl,fm,d-1),B=simpson(F,m,b,eps/2,R,fm,fr,fb,d-1);
+ return[A[0]+B[0],A[1]+B[1]]}
+function integrate(F,a,b,eps=1e-11){
+ if(a===b)return{v:0,err:0};
+ const fa=F(a),fb=F(b),fm=F((a+b)/2);
+ if(![fa,fb,fm].every(isFinite))throw new Error("undefined");
+ const[v,err]=simpson(F,a,b,eps,(b-a)/6*(fa+4*fm+fb),fa,fm,fb,40);return{v,err}}
+function scan(F,a,b,N=4000){let bad=0,pole=false,p=NaN,px=a;
+ for(let i=0;i<=N;i++){const x=a+(b-a)*i/N,y=F(x);if(!isFinite(y))bad++;else{if(Math.abs(y)>1e7)pole=true;
+  if(isFinite(p)&&Math.abs(y-p)>1e5*(1+Math.abs(p)))pole=true;
+  if(isFinite(p)&&p*y<0&&Math.abs(p)>1&&Math.abs(y)>1){let lo=px,hi=x,fl=p;for(let k=0;k<80;k++){const m=(lo+hi)/2,fm=F(m);if(!isFinite(fm))break;if(fm*fl<=0)hi=m;else{lo=m;fl=fm}}
+   if(Math.abs(F((lo+hi)/2))>1e4)pole=true}
+  p=y;px=x}}return{bad,pole}}
+function roots(h,a,b,N=4000){const r=[],xs=i=>a+(b-a)*i/N;let py=h(a);
+ if(py===0)r.push(a);
+ for(let i=1;i<=N;i++){const x1=xs(i),y=h(x1);
+  if(y===0&&r.length<64&&!r.some(q=>Math.abs(q-x1)<1e-9))r.push(x1);
+  else if(isFinite(py)&&isFinite(y)&&py*y<0){let lo=xs(i-1),hi=x1,fl=py;
+   for(let k=0;k<100;k++){const mid=(lo+hi)/2,fm=h(mid);if(fm*fl<=0)hi=mid;else{lo=mid;fl=fm}}
+   let z=(lo+hi)/2;if(Math.abs(z)<1e-12)z=0;if(Math.abs(h(z))<1e-6&&!r.some(q=>Math.abs(q-z)<1e-9))r.push(z)}
+  py=y}
+ return r.sort((p,q)=>p-q)}
+function area(f,g,a,b){
+ if(!(isFinite(a)&&isFinite(b)))throw new Error("Bounds must be finite numbers");
+ if(a>=b)throw new Error("Require a < b");
+ for(const[n,F]of[["f",f],["g",g]]){const s=scan(F,a,b);
+  if(s.bad)throw new Error(n+"(x) is undefined at "+s.bad+" sampled points of ["+a+", "+b+"]: outside its domain");
+  if(s.pole)throw new Error(n+"(x) has a pole/discontinuity in ["+a+", "+b+"]: the integral may diverge, so no area is reported")}
+ const h=x=>f(x)-g(x),r=roots(h,a,b),pts=[a,...r.filter(z=>z>a+1e-9&&z<b-1e-9),b],pieces=[];
+ let total=0,err=0;
+ for(let i=0;i<pts.length-1;i++){const lo=pts[i],hi=pts[i+1],m=(lo+hi)/2,up=h(m)>=0?"f":"g",s=up==="f"?1:-1,I=integrate(h,lo,hi);
+  const val=s*I.v;pieces.push({lo,hi,up,low:up==="f"?"g":"f",val,err:I.err});total+=val;err+=I.err}
+ return{pieces,roots:r,total,err,signed:integrate(h,a,b).v}}
+function radii(f,g,x){const u=f(x),v=g(x),hi=Math.max(u,v),lo=Math.min(u,v);
+ if(lo>=0)return{R:hi,r:lo,Rn:u>=v?"f(x)":"g(x)",rn:u>=v?"g(x)":"f(x)"};
+ if(hi<=0)return{R:-lo,r:-hi,Rn:u<=v?"-f(x)":"-g(x)",rn:u<=v?"-g(x)":"-f(x)"};
+ return hi>=-lo?{R:hi,r:0,Rn:u>=v?"f(x)":"g(x)",rn:"0"}:{R:-lo,r:0,Rn:u<=v?"-f(x)":"-g(x)",rn:"0"}}
+function volume(f,g,a,b,axis){
+ const A=area(f,g,a,b),zero=F=>[0,.25,.5,.75,1].every(t=>F(a+(b-a)*t)===0);
+ if(axis==="y"&&a<0&&b>0)return foldVolume(f,g,a,b,A);
+ let pts=[...A.roots];for(const F of[f,g,x=>f(x)+g(x)])if(!zero(F))pts.push(...roots(F,a,b));
+ if(axis==="y"&&a<0&&b>0)pts.push(0);
+ pts=[a,...pts.filter(z=>z>a+1e-9&&z<b-1e-9),b].sort((p,q)=>p-q).filter((z,i,s)=>i===0||z-s[i-1]>1e-9);
+ const F=integrand(f,g,axis);
+ const pieces=[];let V=0,err=0,inner=false;
+ for(let i=0;i<pts.length-1;i++){const lo=pts[i],hi=pts[i+1],I=integrate(F,lo,hi),q=radii(f,g,(lo+hi)/2);
+  if(axis==="x"&&q.r>1e-9)inner=true;pieces.push({lo,hi,val:I.v,Rn:q.Rn,rn:q.rn});V+=I.v;err+=I.err}
+ return{V,err,pieces,area:A.total,inner,method:axis==="y"?"shell":inner?"washer":"disk",a,b}}
+function unionLen(f,g,a,b,r){const I=[];if(r<=b){const u=f(r),v=g(r);I.push([Math.min(u,v),Math.max(u,v)])}
+ if(r<=-a){const u=f(-r),v=g(-r);I.push([Math.min(u,v),Math.max(u,v)])}
+ if(I.length===1)return I[0][1]-I[0][0];const[p,q]=I;return(p[1]-p[0])+(q[1]-q[0])-Math.max(0,Math.min(p[1],q[1])-Math.max(p[0],q[0]))}
+/* Region on both sides of the y-axis: both sides revolve onto the same space, so the solid is their UNION. */
+function foldVolume(f,g,a,b,A){const rm=Math.max(-a,b),F=integrand(f,g,"y",a,b),m=Math.min(b,-a);
+ const D=[r=>r<=b?f(r)-g(r):NaN,r=>r<=-a?f(-r)-g(-r):NaN,r=>r<=m?f(r)-f(-r):NaN,r=>r<=m?f(r)-g(-r):NaN,r=>r<=m?g(r)-f(-r):NaN,r=>r<=m?g(r)-g(-r):NaN];
+ const zero=Fn=>{let any=false,all=true;for(let t=0;t<=20;t++){const v=Fn(rm*t/20);if(isFinite(v)){any=true;if(v!==0)all=false}}return any&&all};
+ let pts=[0,-a,b,rm];for(const Fn of D)if(!zero(Fn))pts.push(...roots(Fn,0,rm));
+ pts=pts.filter(z=>z>=0&&z<=rm).sort((p,q)=>p-q).filter((z,i,s)=>i===0||z-s[i-1]>1e-9);
+ const pieces=[],e=1e-12*rm;let V=0,err=0;
+ for(let i=0;i<pts.length-1;i++){const lo=pts[i],hi=pts[i+1],I=integrate(F,lo+e,hi-e);pieces.push({lo,hi,val:I.v,Rn:"rho",rn:"-"});V+=I.v;err+=I.err}
+ return{V,err,pieces,area:A.total,inner:false,method:"fold",fold:true,a,b}}
+function integrand(f,g,axis,a,b){if(axis==="y"&&a<0&&b>0)return x=>2*Math.PI*Math.abs(x)*unionLen(f,g,a,b,Math.abs(x));return axis==="x"?x=>{const q=radii(f,g,x);return Math.PI*(q.R*q.R-q.r*q.r)}:x=>2*Math.PI*Math.abs(x)*Math.abs(f(x)-g(x))}
+function section(f,g,Vr,axis,x0){const F=integrand(f,g,axis,Vr.a,Vr.b),x1=Vr.fold?Math.abs(x0):x0;let cum=0;for(const p of Vr.pieces){if(p.hi<=x1)cum+=p.val;else if(p.lo<x1)cum+=integrate(F,p.lo,x1).v}
+ const q=radii(f,g,x0);return{R:q.R,r:q.r,val:F(x0),cum}}
+function numeric(F,a,b,n,m){if(!["left","mid","trap","simp"].includes(m))throw new Error("Unknown method: "+m);n=Math.max(1,Math.floor(n));if(m==="simp"&&n%2)n++;const h=(b-a)/n,x=i=>a+i*h;let s=0,val;
+ if(m==="left"){for(let i=0;i<n;i++)s+=F(x(i));val=h*s}
+ else if(m==="mid"){for(let i=0;i<n;i++)s+=F(x(i)+h/2);val=h*s}
+ else if(m==="trap"){for(let i=1;i<n;i++)s+=F(x(i));val=h*(F(a)/2+F(b)/2+s)}
+ else{for(let i=1;i<n;i++)s+=(i%2?4:2)*F(x(i));val=h/3*(F(a)+F(b)+s)}
+ if(!isFinite(val))throw new Error("Non-finite value during numerical integration");return{val,n,h}}
+/* ---- exact (rational) analytical evaluation for polynomial inputs (BigInt fractions) ---- */
+const gcd=(a,b)=>{a=a<0n?-a:a;b=b<0n?-b:b;while(b){[a,b]=[b,a%b]}return a};
+const Q=(n,d=1n)=>{n=BigInt(n);d=BigInt(d);if(d<0n){n=-n;d=-d}const g=gcd(n,d)||1n;return{n:n/g,d:d/g}};
+const Q0=Q(0),Q1=Q(1),qa=(x,y)=>Q(x.n*y.d+y.n*x.d,x.d*y.d),qm=(x,y)=>Q(x.n*y.n,x.d*y.d),qn=x=>Q(-x.n,x.d),qs=x=>x.n>0n?1:x.n<0n?-1:0,qf=x=>Number(x.n)/Number(x.d),
+ qstr=x=>x.d===1n?String(x.n):x.n+"/"+x.d,qeq=(x,y)=>x.n===y.n&&x.d===y.d,qlt=(x,y)=>x.n*y.d<y.n*x.d,
+ qtex=x=>x.d===1n?String(x.n):(x.n<0n?"-":"")+"\\frac{"+(x.n<0n?-x.n:x.n)+"}{"+x.d+"}";
+function toQ(v,tol=1e-9,maxd=100000){if(!isFinite(v))return null;const neg=v<0;v=Math.abs(v);let h0=0n,h1=1n,k0=1n,k1=0n,x=v;
+ for(let i=0;i<40;i++){const a=Math.floor(x),A=BigInt(a);[h0,h1]=[h1,A*h1+h0];[k0,k1]=[k1,A*k1+k0];if(k1>BigInt(maxd))return null;
+  if(Math.abs(v-Number(h1)/Number(k1))<=tol*Math.max(1,v))return Q(neg?-h1:h1,k1);const fr=x-a;if(fr<1e-15)break;x=1/fr}return null}
+const pt=P=>{while(P.length>1&&qs(P[P.length-1])===0)P.pop();return P},
+ padd=(P,R)=>pt(Array.from({length:Math.max(P.length,R.length)},(_,i)=>qa(P[i]||Q0,R[i]||Q0))),pneg=P=>P.map(qn),psub=(P,R)=>padd(P,pneg(R)),
+ pmul=(P,R)=>{const o=Array.from({length:P.length+R.length-1},()=>Q0);P.forEach((p,i)=>R.forEach((r,j)=>{o[i+j]=qa(o[i+j],qm(p,r))}));return pt(o)},
+ peval=(P,x)=>P.reduceRight((s,c)=>qa(qm(s,x),c),Q0),pint=P=>[Q0,...P.map((c,i)=>qm(c,Q(1,i+1)))];
+function polyTex(P){let s="";for(let k=P.length-1;k>=0;k--){const c=P[k];if(qs(c)===0)continue;const neg=qs(c)<0,ac=neg?qn(c):c,
+ cs=(qeq(ac,Q1)&&k>0)?"":qtex(ac),xs=k===0?"":k===1?"x":"x^{"+k+"}";s+=(s?(neg?" - ":" + "):(neg?"-":""))+cs+xs}return s||"0"}
+function fit(F,maxDeg=6){const v=[];for(let i=0;i<=maxDeg;i++){const y=F(i);if(!isFinite(y))return null;v.push(y)}
+ for(let D=0;D<=maxDeg;D++){let cur=v.slice(0,D+1);const nc=[];for(let k=0;k<=D;k++){nc.push(cur[0]);cur=cur.slice(1).map((y,i)=>y-cur[i])}
+  const mono=Array(D+1).fill(0);let ff=[1],fact=1;
+  for(let k=0;k<=D;k++){if(k>0)fact*=k;for(let i=0;i<ff.length;i++)mono[i]+=nc[k]/fact*ff[i];const nf=Array(ff.length+1).fill(0);for(let i=0;i<ff.length;i++){nf[i+1]+=ff[i];nf[i]-=k*ff[i]}ff=nf}
+  const P=mono.map(c=>toQ(c,1e-7,10000));if(P.some(c=>!c))continue;const pf=t=>P.reduceRight((s,c)=>s*t+qf(c),0);
+  if([-6.1,-3.7,-1.3,.31,2.9,5.3].every(t=>{const y=F(t);return isFinite(y)&&Math.abs(y-pf(t))<=1e-8*(1+Math.abs(y))}))return pt(P)}return null}
+function rootsExact(P,Ff,a,b){if(P.every(c=>qs(c)===0))return[];const out=[];
+ for(const r of roots(Ff,qf(a),qf(b))){if(r<=qf(a)+1e-12||r>=qf(b)-1e-12)continue;const q=toQ(r,1e-9,100000);if(!q||qs(peval(P,q))!==0)throw new Error("intersection points are irrational");out.push(q)}return out}
+const uniq=L=>L.sort((x,y)=>qlt(x,y)?-1:qlt(y,x)?1:0).filter((z,i,s)=>i===0||!qeq(z,s[i-1]));
+const piStr=v=>v.d===1n?(v.n===1n?"π":v.n===-1n?"-π":v.n+"π"):(v.n===1n?"π":v.n+"π")+"/"+v.d,
+ piTex=v=>v.d===1n?(v.n===1n?"\\pi":v.n===-1n?"-\\pi":v.n+"\\pi"):"\\frac{"+(v.n===1n?"":v.n)+"\\pi}{"+v.d+"}";
+function prep(f,g,a,b){const A=toQ(a,1e-12),B=toQ(b,1e-12);if(!A||!B)throw new Error("bounds are not rational numbers");
+ const pf=fit(f),pg=fit(g);if(!pf||!pg)throw new Error("f or g is not a polynomial (degree ≤ 6) with rational coefficients");return{A,B,pf,pg}}
+function exactArea(f,g,a,b){try{const{A,B,pf,pg}=prep(f,g,a,b),h=psub(pf,pg),br=uniq([A,...rootsExact(h,x=>f(x)-g(x),A,B),B]),pieces=[],Ih=pint(h);let tot=Q0,sg=Q0;
+ for(let i=0;i<br.length-1;i++){const lo=br[i],hi=br[i+1],m=qm(qa(lo,hi),Q(1,2)),s=qs(peval(h,m))||1,W=s>0?h:pneg(h),I=pint(W),val=qa(peval(I,hi),qn(peval(I,lo)));
+  pieces.push({lo:qstr(lo),hi:qstr(hi),loTex:qtex(lo),hiTex:qtex(hi),Wtex:polyTex(W),val:qstr(val),valTex:qtex(val)});tot=qa(tot,val);sg=qa(sg,qa(peval(Ih,hi),qn(peval(Ih,lo))))}
+ return{ok:true,str:qstr(tot),num:qf(tot),tex:qtex(tot),signed:qstr(sg),pieces}}catch(e){return{ok:false,reason:String(e.message||e)}}}
+function exactVolume(f,g,a,b,axis){try{const{A,B,pf,pg}=prep(f,g,a,b),h=psub(pf,pg);
+ if(axis==="y"&&qlt(A,Q0)&&qlt(Q0,B))throw new Error("the region lies on both sides of the y-axis (union of two revolved sides)");
+ const sets=axis==="x"?[[h,x=>f(x)-g(x)],[pf,f],[pg,g],[padd(pf,pg),x=>f(x)+g(x)]]:[[h,x=>f(x)-g(x)]];let rs=[A,B];for(const[P,F]of sets)rs.push(...rootsExact(P,F,A,B));
+ const br=uniq(rs),pieces=[];let tot=Q0;
+ for(let i=0;i<br.length-1;i++){const lo=br[i],hi=br[i+1],m=qm(qa(lo,hi),Q(1,2));let W;
+  if(axis==="x"){const u=peval(pf,m),v=peval(pg,m),sw=qlt(u,v),hiP=sw?pg:pf,loP=sw?pf:pg,H=sw?v:u,L=sw?u:v;let R,r;
+   if(qs(L)>=0){R=hiP;r=loP}else if(qs(H)<=0){R=pneg(loP);r=pneg(hiP)}else if(!qlt(H,qn(L))){R=hiP;r=[Q0]}else{R=pneg(loP);r=[Q0]}
+   W=psub(pmul(R,R),pmul(r,r))}
+  else{const s=qs(peval(h,m))||1,sx=qs(m)||1;W=pmul([Q0,Q(2)],s>0?h:pneg(h));if(sx<0)W=pneg(W)}
+  const I=pint(W),val=qa(peval(I,hi),qn(peval(I,lo)));pieces.push({lo:qstr(lo),hi:qstr(hi),loTex:qtex(lo),hiTex:qtex(hi),Wtex:polyTex(W),val:piStr(val),valTex:piTex(val)});tot=qa(tot,val)}
+ return{ok:true,str:piStr(tot),num:qf(tot)*Math.PI,tex:piTex(tot),pieces}}catch(e){return{ok:false,reason:String(e.message||e)}}}
+return{compile,integrate,roots,area,scan,volume,radii,integrand,section,numeric,exactArea,exactVolume}})();
+
+/* ================= i18n ================= */
+const T={en:{sub:"Area & Volume Laboratory",m1:"Area Between Curves",soon:"Phase 4",calc:"Compute",tests:"Engine self-tests",steps:"Solution steps"},
+ar:{sub:"مختبر المساحات والأحجام",m1:"المساحة بين منحنيين",soon:"قيد التطوير",calc:"احسب",tests:"اختبارات المحرك",steps:"خطوات الحل"}};
+let L="en";const $=id=>document.getElementById(id);
+function applyLang(){document.documentElement.lang=L;document.documentElement.dir=L==="ar"?"rtl":"ltr";
+ document.querySelectorAll("[data-i]").forEach(e=>e.textContent=T[L][e.dataset.i]);$("lang").textContent=L==="en"?"العربية":"English";render()}
+$("lang").onclick=()=>{L=L==="en"?"ar":"en";applyLang()};
+
+/* ================= UI ================= */
+const tex=s=>katex.renderToString(s,{output:"mathml",throwOnError:false});
+const n=(v,d=6)=>Number(v.toPrecision(d)).toString();
+const S={ar:{given:"المعطيات",roots:"نقاط التقاطع",order:"الدالة العليا والسفلى",setup:"تكوين التكامل",calc:"حساب كل جزء",final:"الناتج النهائي",exact:"الحساب الدقيق (حسابيات كسرية)",noexact:"لا توجد صيغة دقيقة، النتيجة عددية فقط",none:"لا توجد نقاط تقاطع داخل الفترة"},
+en:{given:"Given",roots:"Intersection points",order:"Upper & lower function",setup:"Setting up the integral",calc:"Evaluating each piece",final:"Final result",exact:"Exact evaluation (rational arithmetic)",noexact:"No exact form, numerical result only",none:"No intersections inside the interval"}};
+function render(){
+ const msg=$("msg");msg.innerHTML="";
+ try{
+  const f=Engine.compile($("f").value),g=Engine.compile($("g").value),a=math.evaluate($("a").value.replace(/π/g,"pi")),b=math.evaluate($("b").value.replace(/π/g,"pi"));
+  const R=Engine.area(f,g,a,b),s=S[L],X=Engine.exactArea(f,g,a,b),agree=X.ok?(Math.abs(X.num-R.total)<=Math.max(1e-8*Math.max(1,R.total),5*R.err)?"  ✔ agrees with numerical":"  ⚠ DIFFERS from numerical"):"";last1={f,g,a,b,R,ex:X};
+  const kv=[["Total Area",n(R.total,10)],["Error estimate (adaptive Simpson)","≤ "+R.err.toExponential(1)],["Intersections",R.roots.length?R.roots.map(z=>n(z,8)).join(", "):"—"],
+   ["Upper / Lower",R.pieces.map(p=>p.up+" / "+p.low).join(" ; ")],["Definite ∫(f−g)",n(R.signed,10)],["Analytical result",X.ok?X.str+" = "+n(X.num,10)+agree:"n/a (numerical only)"],["Method",X.ok?"Exact rational arithmetic + numerical check":"Numerical (verified adaptive Simpson)"]];
+  $("res").innerHTML=kv.map(([k,v])=>`<div>${k}<b>${v}</b></div>`).join("");
+  const ST=[[s.given,tex(`f(x)=${f.tex},\\; g(x)=${g.tex},\\; [a,b]=[${n(a,8)},${n(b,8)}]`)],
+   [s.roots,R.roots.length?tex("x\\in\\{"+R.roots.map(z=>n(z,8)).join(",\\,")+"\\}"):s.none],
+   [s.order,R.pieces.map(p=>tex(`[${n(p.lo,6)},${n(p.hi,6)}]:\\;${p.up}\\ge ${p.low}`)).join("<br>")],
+   [s.setup,tex("A=\\int_a^b|f-g|\\,dx="+R.pieces.map(p=>`\\int_{${n(p.lo,6)}}^{${n(p.hi,6)}}(${p.up}-${p.low})\\,dx`).join("+"))],
+   [s.calc,R.pieces.map(p=>tex(`${n(p.val,10)}`)).join(" + ")],
+   [s.exact,X.ok?X.pieces.map(q=>tex(`\\int_{${q.loTex}}^{${q.hiTex}}\\left(${q.Wtex}\\right)dx=${q.valTex}`)).join("<br>")+"<br>"+tex("A="+X.tex):"<small>"+s.noexact+" ("+X.reason+")</small>"],
+   [s.final,tex("A\\approx "+n(R.total,10))]];
+  $("steps").innerHTML=ST.map(([h,c],i)=>`<div class="step"><h4>${i+1}. ${h}</h4>${c}</div>`).join("");
+  plot(f,g,a,b,R);
+ }catch(e){msg.innerHTML=`<div class="err">${String(e.message||e)}</div>`}}
+function plot(f,g,a,b,R){
+ const N=400,pad=(b-a)*.15,xs=Array.from({length:N+1},(_,i)=>a-pad+(b-a+2*pad)*i/N),tr=[];
+ const col={f:"#4cc9f0",g:"#f72585"};
+ R.pieces.forEach(p=>{const q=Array.from({length:120},(_,i)=>p.lo+(p.hi-p.lo)*i/119),U=p.up==="f"?f:g,Lo=p.up==="f"?g:f;
+  tr.push({x:[...q,...q.slice().reverse()],y:[...q.map(U),...q.slice().reverse().map(Lo)],fill:"toself",fillcolor:"rgba(6,214,160,.28)",line:{width:0},hoverinfo:"skip",showlegend:false,type:"scatter"})});
+ tr.push({x:xs,y:xs.map(f),name:"f(x)",line:{color:col.f,width:3},type:"scatter",connectgaps:false});
+ tr.push({x:xs,y:xs.map(g),name:"g(x)",line:{color:col.g,width:3},type:"scatter",connectgaps:false});
+ tr.push({x:R.roots,y:R.roots.map(f),mode:"markers",name:"∩",marker:{color:"#ffd166",size:9},type:"scatter"});
+ Plotly.react("plot",tr,{paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"#0b1226",font:{color:"#e6ebff"},margin:{t:10,r:10,b:35,l:40},xaxis:{gridcolor:"#243052",zeroline:true},yaxis:{gridcolor:"#243052",zeroline:true},legend:{orientation:"h"}},{responsive:true,displaylogo:false})}
+let tm;["f","g","a","b"].forEach(i=>$(i).addEventListener("input",()=>{clearTimeout(tm);tm=setTimeout(render,250)}));$("go").onclick=render;
+
+/* ================= SELF-TESTS (run on the real engine) ================= */
+function tests(){
+ const C=Engine.compile,out=[];
+ const eq=(name,got,exp,tol=1e-8)=>out.push([name,Math.abs(got-exp)<=tol,`${got} vs ${exp}`]);
+ let A=Engine.area(C("x^2"),C("x"),0,1);eq("Area x²,x on [0,1] = 1/6",A.total,1/6);
+ A=Engine.area(C("x^2"),C("x"),0,2);eq("Switching upper/lower on [0,2] = 1",A.total,1);eq("…2 pieces",A.pieces.length,2,0);
+ A=Engine.area(C("sin(x)"),C("0"),0,Math.PI);eq("∫₀^π sin x = 2",A.total,2);
+ A=Engine.area(C("e^x"),C("ln(x)+3"),1,2);eq("exp/log mix is finite & positive",A.total>0?1:0,1,0);
+ eq("Roots of x²−x on [−1,2] = {0,1}",Engine.roots(x=>x*x-x,-1,2).map(z=>Math.round(z*1e6)/1e6).join(",")==="0,1"?1:0,1,0);
+ eq("Cubic x³+2x²−5x+1 has 3 roots in [−4,3]",Engine.roots(C("x^3+2x^2-5x+1"),-4,3).length,3,0);
+ const rej=(name,fn)=>{let ok=false;try{fn()}catch(_){ok=true}out.push([name,ok,"rejected"])};
+ rej("Rejects unknown function (no eval)",()=>C("alert(x)"));rej("Rejects syntax error",()=>C("x+"));rej("Rejects assignment",()=>C("y=3"));
+ rej("Pole 1/x on [−1,1] refused",()=>Engine.area(C("1/x"),C("0"),-1,1));
+ rej("√x on [−1,1] refused (domain)",()=>Engine.area(C("sqrt(x)"),C("0"),-1,1));
+ (()=>{const XA=Engine.exactArea,XV=Engine.exactVolume;
+ eq("Exact area x² vs x on [0,1] = 1/6",XA(C("x^2"),C("x"),0,1).num,1/6);eq("Exact area on [0,2] = 1",XA(C("x^2"),C("x"),0,2).num,1);
+ eq("Exact V disk x² on [0,2] = 32π/5",XV(C("x^2"),C("0"),0,2,"x").num,32*Math.PI/5);eq("Exact V washer = 2π/15",XV(C("x"),C("x^2"),0,1,"x").num,2*Math.PI/15);
+ eq("Exact V shell x² about y on [0,2] = 8π",XV(C("x^2"),C("0"),0,2,"y").num,8*Math.PI);
+ eq("sin(x): no exact form (not a polynomial)",XA(C("sin(x)"),C("0"),0,3).ok?1:0,0,0);eq("Irrational intersections: no exact form",XA(C("x^2"),C("2"),0,3).ok?1:0,0,0)})();
+SAMPLES.forEach(s=>eq("Sample "+s.id+": "+s.t,s.run(),s.ref));
+(()=>{const F=C("x^2"),N=(m,k)=>Engine.numeric(F,0,1,k,m).val;
+ eq("Left n=4 on x² = 0.21875",N("left",4),.21875);eq("Midpoint n=4 = 0.328125",N("mid",4),.328125);eq("Trapezoid n=4 = 0.34375",N("trap",4),.34375);eq("Simpson n=2 exact = 1/3",N("simp",2),1/3);
+ const S=C("sin(x)"),er=(m,k)=>Math.abs(Engine.numeric(S,0,Math.PI,k,m).val-2);
+ eq("Trapezoid error ratio ≈ 4 when n doubles",er("trap",32)/er("trap",64),4,.05);eq("Simpson error ratio ≈ 16 when n doubles",er("simp",16)/er("simp",32),16,1);
+ const Vv=Engine.volume(C("x^2"),C("0"),0,2,"x");
+ eq("Accumulated volume at x=1 is π/5",Engine.section(C("x^2"),C("0"),Vv,"x",1).cum,Math.PI/5);eq("Accumulated at x=b equals V",Engine.section(C("x^2"),C("0"),Vv,"x",2).cum,Vv.V)})();
+(()=>{const V=(f,g,a,b,x)=>Engine.volume(C(f),C(g),a,b,x);
+ eq("Disk x² about x, [0,2] = 32π/5",V("x^2","0",0,2,"x").V,32*Math.PI/5);
+ eq("Washer x vs x² about x = 2π/15",V("x","x^2",0,1,"x").V,2*Math.PI/15);
+ eq("Cone from wedge ±x about x = π/3",V("x","-x",0,1,"x").V,Math.PI/3);
+ eq("Region crossing axis: x² vs −1 = π",V("x^2","-1",0,1,"x").V,Math.PI);
+ eq("Y-axis x² on [0,2] = 8π",V("x^2","0",0,2,"y").V,8*Math.PI);
+ eq("Y-axis x vs x² on [0,1] = π/6",V("x","x^2",0,1,"y").V,Math.PI/6);eq("Y-axis, region on both sides: x² on [−1,2] = 8π (overlap once)",V("x^2","0",-1,2,"y").V,8*Math.PI)})();
+rej("tan(x) pole at π/2 refused",()=>Engine.area(C("tan(x)"),C("0"),0,2));rej("a ≥ b refused",()=>Engine.area(C("x"),C("0"),2,1));
+ $("tests").innerHTML=out.map(([t,ok,d])=>`<div class="test ${ok?"t-ok":"t-bad"}">${ok?"✔":"✘"} ${t} <small>(${d})</small></div>`).join("")+
+  `<div class="test"><b>${out.filter(o=>o[1]).length}/${out.length} passed</b></div>`}
+window.addEventListener("load",()=>{try{tests()}catch(e){$("tests").innerHTML=`<div class="err">${e.message}</div>`}applyLang()});
+
+/* ================= Phase 4: 3D SOLID OF REVOLUTION ================= */
+T.en.m5="Experiments & Reports";T.ar.m5="التجارب والتقارير";T.en.m3="Cross-Section Explorer";T.ar.m3="مستكشف المقاطع العرضية";T.en.m4="Numerical Integration Lab";T.ar.m4="مختبر التكامل العددي";T.en.m2="3D Solid of Revolution";T.ar.m2="الجسم الدوراني ثلاثي الأبعاد";
+const S3={en:{given:"Given",why:"Choice of method",rad:"Radii on each piece",setup:"Setting up the integral",val:"Evaluating",fin:"Final result",exact:"Exact evaluation (rational arithmetic)",noexact:"No exact form, numerical result only",
+ disk:"Every slice perpendicular to the axis is a full disk (inner radius 0): V=π∫[R(x)]²dx.",washer:"The region stays away from the axis, so each slice is a washer: V=π∫[R(x)²−r(x)²]dx.",
+ shell:"Rotation about the y-axis: horizontal washers need x=f⁻¹(y), so the equivalent shell formula V=2π∫|x|·|f−g|dx is used (same volume).",fold:"The region lies on both sides of the y-axis. The two sides revolve onto the same space, so the solid is their union and the overlap is counted once: V=2π∫ρ·|Y(ρ)|dρ, ρ=|x|."},
+ ar:{given:"المعطيات",why:"سبب اختيار الطريقة",rad:"أنصاف الأقطار في كل جزء",setup:"تكوين التكامل",val:"الحساب",fin:"الناتج النهائي",exact:"الحساب الدقيق (حسابيات كسرية)",noexact:"لا توجد صيغة دقيقة، النتيجة عددية فقط",
+ disk:"كل مقطع عمودي على المحور قرص كامل (نصف القطر الداخلي 0): V=π∫[R(x)]²dx.",washer:"المنطقة لا تلامس المحور، فكل مقطع حلقة: V=π∫[R(x)²−r(x)²]dx.",
+ shell:"الدوران حول محور y: الحلقات الأفقية تحتاج x=f⁻¹(y)، لذا تُستخدم صيغة القشرات V=2π∫|x|·|f−g|dx وهي تعطي الحجم نفسه.",fold:"المنطقة على جانبي محور y، فيدور الجانبان إلى الحيز نفسه، لذا الجسم هو اتحادهما ويُحسب التداخل مرة واحدة: V=2π∫ρ·|Y(ρ)|dρ حيث ρ=|x|."}};
+const V3={};let st=null;
+function show(v){V3.view=v;[1,2,3,4,5].forEach(i=>$("n"+i).classList.toggle("on",i===v));
+ $("v1").hidden=v!==1;$("v2").hidden=!(v===2||v===3);$("v4").hidden=v!==4;$("v5").hidden=v!==5;$("cs").hidden=v!==3;$("h1").dataset.i="m"+v;applyLang();
+ if(v===1){try{Plotly.Plots.resize($("plot"))}catch(_){}}else if(v===4)compute4();else if(v===5)renderV5();else{if(!V3.r&&!init3())return;compute3()}}
+[1,2,3,4,5].forEach(i=>$("n"+i).onclick=()=>show(i));
+function init3(){try{const el=$("three"),r=new THREE.WebGLRenderer({antialias:true});r.setPixelRatio(Math.min(devicePixelRatio,2));r.setClearColor(0x0b1226);el.appendChild(r.domElement);
+ const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(45,1,.01,1e4);sc.add(new THREE.AmbientLight(0xffffff,.6));const dl=new THREE.DirectionalLight(0xffffff,.9);dl.position.set(3,5,4);sc.add(dl);
+ Object.assign(V3,{r,sc,cam,el,th:.8,ph:1.1,d:6,c:new THREE.Vector3(),grp:new THREE.Group()});sc.add(V3.grp);
+ const P=new Map();el.onpointerdown=e=>{el.setPointerCapture(e.pointerId);P.set(e.pointerId,[e.clientX,e.clientY])};el.onpointerup=el.onpointercancel=e=>P.delete(e.pointerId);
+ el.onpointermove=e=>{const o=P.get(e.pointerId);if(!o)return;if(P.size===1){V3.th-=(e.clientX-o[0])*.01;V3.ph=Math.min(3.1,Math.max(.05,V3.ph-(e.clientY-o[1])*.01))}
+  else{const q=[...P.entries()].find(([k])=>k!==e.pointerId)[1];V3.d*=Math.hypot(o[0]-q[0],o[1]-q[1])/Math.max(Math.hypot(e.clientX-q[0],e.clientY-q[1]),1)}
+  P.set(e.pointerId,[e.clientX,e.clientY]);draw3()};
+ el.onwheel=e=>{e.preventDefault();V3.d*=Math.exp(e.deltaY*.001);draw3()};window.addEventListener("resize",draw3);return true}
+ catch(e){$("msg3").innerHTML=`<div class="err">WebGL unavailable: ${e.message}</div>`;return false}}
+function draw3(){const v=V3;if(!v.r)return;const w=v.el.clientWidth||300;v.r.setSize(w,420);v.cam.aspect=w/420;v.cam.updateProjectionMatrix();
+ v.cam.position.set(v.c.x+v.d*Math.sin(v.ph)*Math.sin(v.th),v.c.y+v.d*Math.cos(v.ph),v.c.z+v.d*Math.sin(v.ph)*Math.cos(v.th));v.cam.lookAt(v.c);v.r.render(v.sc,v.cam)}
+function grid(fn,nu,nv){const pos=[],idx=[];for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++)pos.push(...fn(i/nu,j/nv));
+ for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){const a=j*(nu+1)+i,c=a+nu+1;idx.push(a,a+1,c,a+1,c+1,c)}
+ const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();return g}
+function refresh3(refit){if(!st)return;const{f,g,a,b,ax,R}=st,deg=+$("deg").value,th=deg*Math.PI/180,k=deg/360,grp=V3.grp;$("degv").textContent=deg+"°";
+ while(grp.children.length){const o=grp.children.pop();o.geometry&&o.geometry.dispose()}
+ const rot=(x,y,p)=>ax==="x"?[x,y*Math.cos(p),y*Math.sin(p)]:[x*Math.cos(p),y,x*Math.sin(p)],nv=Math.max(2,Math.ceil(96*k)),X=u=>a+(b-a)*u,op=$("op").value/100;
+ const add=(geo,col)=>grp.add(new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:col,side:THREE.DoubleSide,transparent:true,opacity:op,roughness:.4,metalness:.1,depthWrite:op>.95})));
+ for(const[H,c]of[[f,0x4cc9f0],[g,0xf72585]])add(grid((u,v)=>{const x=X(u);return rot(x,H(x),v*th)},200,nv),c);
+ for(const xe of[a,b])add(grid((u,v)=>rot(xe,g(xe)+(f(xe)-g(xe))*u,v*th),1,nv),0x06d6a0);
+ for(const p of[0,th])add(grid((u,v)=>{const x=X(u);return rot(x,g(x)+(f(x)-g(x))*v,p)},200,1),0xffd166);
+ if($("lay").checked)for(let i=0;i<12;i++){const x=X((i+.5)/12),arcs=ax==="x"?(q=>[[q.R,0],[q.r,0]])(Engine.radii(f,g,x)):[[Math.abs(x),f(x)],[Math.abs(x),g(x)]];
+  for(const[rad,y0]of arcs){if(!(rad>1e-9))continue;const p=[];for(let j=0;j<=64;j++){const t=th*j/64;p.push(...(ax==="x"?[x,rad*Math.cos(t),rad*Math.sin(t)]:[rad*Math.cos(t),y0,rad*Math.sin(t)]))}
+   const gg=new THREE.BufferGeometry();gg.setAttribute("position",new THREE.Float32BufferAttribute(p,3));grp.add(new THREE.Line(gg,new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.7})))}}
+ const bb=new THREE.Box3().setFromObject(grp),sz=bb.getSize(new THREE.Vector3()),m=Math.max(sz.x,sz.y,sz.z,1e-6);
+ const e=ax==="x"?[[bb.min.x-m*.3,0,0],[bb.max.x+m*.3,0,0]]:[[0,bb.min.y-m*.3,0],[0,bb.max.y+m*.3,0]],ag=new THREE.BufferGeometry();
+ ag.setAttribute("position",new THREE.Float32BufferAttribute(e.flat(),3));grp.add(new THREE.Line(ag,new THREE.LineBasicMaterial({color:0xffffff})));
+ if(V3.view===3){const x0=a+(b-a)*$("sx").value/1000,w=(c,o)=>new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide,transparent:true,opacity:o,depthWrite:false});
+ if(ax==="x"){const q=Engine.radii(f,g,x0),M=Math.max(sz.y,sz.z,2*q.R)*.6;
+  grp.add(new THREE.Mesh(grid((u,v)=>[x0,(2*u-1)*M,(2*v-1)*M],1,1),w(0xffffff,.12)));
+  grp.add(new THREE.Mesh(grid((u,v)=>rot(x0,q.r+(q.R-q.r)*u,v*th),1,nv),w(0xffd166,.95)))}
+ else grp.add(new THREE.Mesh(grid((u,v)=>rot(x0,g(x0)+(f(x0)-g(x0))*u,v*th),1,nv),w(0xffd166,.95)));
+ updateCS(x0)}
+if(refit){V3.c.copy(bb.getCenter(new THREE.Vector3()));V3.d=m*2.4}
+ $("res3").querySelector("[data-v]")&&($("res3").querySelector("[data-v]").innerHTML=n(R.V*k,10));draw3()}
+function compute3(){const mg=$("msg3");mg.innerHTML="";
+ try{const f=Engine.compile($("f2").value),g=Engine.compile($("g2").value),a=math.evaluate($("a2").value.replace(/π/g,"pi")),b=math.evaluate($("b2").value.replace(/π/g,"pi")),ax=$("ax").value,R=Engine.volume(f,g,a,b,ax),s=S3[L];
+  const X=Engine.exactVolume(f,g,a,b,ax);st={f,g,a,b,ax,R,ex:X};const mth=R.method==="fold"?"Shell, folded union":R.method==="shell"?"Shell (≡ disks in y)":R.method==="washer"?"Washer":"Disk";
+  $("res3").innerHTML=[["Volume V",`<span data-v>${n(R.V,10)}</span>`],["Volume at 360°",n(R.V,10)],["Error estimate","≤ "+R.err.toExponential(1)],["Method",mth],["Region area",n(R.area,8)],["Axis",ax.toUpperCase()+"-axis"],["Analytical V (360°)",X.ok?X.str+(Math.abs(X.num-R.V)<=Math.max(1e-8*R.V,5*R.err)?"  ✔":"  ⚠ differs"):"n/a (numerical only)"]].map(([x,y])=>`<div>${x}<b>${y}</b></div>`).join("");
+  const body=ax==="x"?R.pieces.map(p=>tex(`[${n(p.lo,5)},${n(p.hi,5)}]:\\;R=${p.Rn},\\; r=${p.rn}`)).join("<br>"):tex(R.fold?"\\rho=|x|,\\;|Y(\\rho)|=\\text{union of both sides}":"R(x)=|x|");
+  const setup=ax==="x"?"V=\\pi\\int_a^b\\left[R^2-r^2\\right]dx":R.fold?"V=2\\pi\\int_0^{\\rho_{\\max}}\\rho\\,|Y(\\rho)|\\,d\\rho":"V=2\\pi\\int_a^b |x|\\,|f-g|\\,dx";
+  const ST=[[s.given,tex(`f=${f.tex},\\; g=${g.tex},\\; [${n(a,6)},${n(b,6)}],\\; \\text{axis}: ${ax}`)],[s.why,s[R.method]],[s.rad,body],[s.setup,tex(setup)],
+   [s.val,R.pieces.map(p=>tex(n(p.val,10))).join(" + ")],[s.exact,X.ok?X.pieces.map(q=>tex(`\\int_{${q.loTex}}^{${q.hiTex}}\\left(${q.Wtex}\\right)dx=${q.valTex}`)).join("<br>")+"<br>"+tex("V="+X.tex):"<small>"+s.noexact+" ("+X.reason+")</small>"],
+   [s.fin,tex("V\\approx "+n(R.V,10))+(R.V/Math.PI?" = "+tex(n(R.V/Math.PI,10)+"\\pi"):"")]];
+  $("steps3").innerHTML=ST.map(([h,c],i)=>`<div class="step"><h4>${i+1}. ${h}</h4>${c}</div>`).join("");refresh3(true)
+ }catch(e){st=null;mg.innerHTML=`<div class="err">${String(e.message||e)}</div>`}}
+let t3;["f2","g2","a2","b2","ax"].forEach(i=>$(i).addEventListener("input",()=>{clearTimeout(t3);t3=setTimeout(compute3,250)}));
+["deg","op","lay"].forEach(i=>$(i).addEventListener("input",()=>refresh3(false)));
+$("anim").onclick=()=>{if(!st)return;const s0=performance.now();(function tick(t){const q=Math.min(1,(t-s0)/3500);$("deg").value=Math.max(1,Math.round(q*360));refresh3(false);if(q<1)requestAnimationFrame(tick)})(s0)};
+
+/* ===== Phase 5: cross-sections + numerical lab ===== */
+const PL={paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"#0b1226",font:{color:"#e6ebff"},margin:{t:10,r:10,b:35,l:50},xaxis:{gridcolor:"#243052"},yaxis:{gridcolor:"#243052"},legend:{orientation:"h"}};
+const PC={responsive:true,displaylogo:false};
+$("sx").addEventListener("input",()=>refresh3(false));
+function updateCS(x0){const{f,g,a,b,ax,R}=st,c=Engine.section(f,g,R,ax,x0),F=Engine.integrand(f,g,ax,a,b);
+ const rows=ax==="x"?[["x",n(x0,6)],["R(x)",n(c.R,8)],["r(x)",n(c.r,8)],["Section area π(R²−r²)",n(F(x0),8)]]:R.fold?[["x",n(x0,6)],["Radius ρ=|x|",n(Math.abs(x0),8)],["Union height |Y(ρ)|",n(F(x0)/(2*Math.PI*Math.abs(x0)||1),8)],["Rate 2πρ|Y|",n(F(x0),8)]]:[["x",n(x0,6)],["Shell radius |x|",n(Math.abs(x0),8)],["Shell height |f−g|",n(Math.abs(f(x0)-g(x0)),8)],["Rate 2π|x||f−g|",n(F(x0),8)]];
+ rows.push(["Accumulated volume",n(c.cum,8)],["Share of total V",R.V?n(100*c.cum/R.V,5)+" %":"—"]);
+ $("res_cs").innerHTML=rows.map(([k,v])=>`<div>${k}<b>${v}</b></div>`).join("");
+ const xs=Array.from({length:301},(_,i)=>a+(b-a)*i/300),ys=xs.map(F),ya=ys.map((y,i)=>(R.fold?Math.abs(xs[i])<=Math.abs(x0):xs[i]<=x0)?y:null);
+ Plotly.react("csplot",[{x:xs,y:ya,fill:"tozeroy",fillcolor:"rgba(255,209,102,.35)",line:{color:"#ffd166"},name:"accumulated",type:"scatter"},
+  {x:xs,y:ys,line:{color:"#4cc9f0"},name:ax==="x"?"A(x)=π(R²−r²)":"2π|x||f−g|",type:"scatter"},{x:[x0],y:[F(x0)],mode:"markers",marker:{color:"#f72585",size:10},showlegend:false,type:"scatter"}],{...PL,height:240},PC)}
+const FORM={left:"\\Delta x\\sum_{i=0}^{n-1}f(x_i)",mid:"\\Delta x\\sum_{i=0}^{n-1}f\\!\\left(x_i+\\tfrac{\\Delta x}{2}\\right)",trap:"\\tfrac{\\Delta x}{2}\\left[f(x_0)+2\\sum_{i=1}^{n-1}f(x_i)+f(x_n)\\right]",simp:"\\tfrac{\\Delta x}{3}\\left[f_0+4f_1+2f_2+\\dots+4f_{n-1}+f_n\\right]"};
+function shape(F,a,b,n,m){const h=(b-a)/n,X=[],Y=[];
+ if(m==="left"||m==="mid")for(let i=0;i<n;i++){const x0=a+i*h,y=F(m==="left"?x0:x0+h/2);X.push(x0,x0,x0+h,x0+h);Y.push(0,y,y,0)}
+ else if(m==="trap"){X.push(a);Y.push(0);for(let i=0;i<=n;i++){X.push(a+i*h);Y.push(F(a+i*h))}X.push(b);Y.push(0)}
+ else{X.push(a);Y.push(0);for(let i=0;i<n;i+=2){const x0=a+i*h,x1=x0+h,x2=x1+h,y0=F(x0),y1=F(x1),y2=F(x2);
+  for(let k=0;k<=16;k++){const x=x0+2*h*k/16;X.push(x);Y.push(y0*(x-x1)*(x-x2)/((x0-x1)*(x0-x2))+y1*(x-x0)*(x-x2)/((x1-x0)*(x1-x2))+y2*(x-x0)*(x-x1)/((x2-x0)*(x2-x1)))}}X.push(b);Y.push(0)}
+ return{X,Y}}
+function compute4(){const mg=$("msg4");mg.innerHTML="";
+ try{const f=Engine.compile($("f4").value),a=math.evaluate($("a4").value.replace(/π/g,"pi")),b=math.evaluate($("b4").value.replace(/π/g,"pi")),m=$("m4").value;
+  if(!(isFinite(a)&&isFinite(b)&&a<b))throw new Error("Require finite a < b");const sc=Engine.scan(f,a,b);
+  if(sc.bad||sc.pole)throw new Error("f(x) is undefined or has a pole in [a, b]: numerical integration is not valid there");
+  const r=Engine.numeric(f,a,b,+$("n4r").value,m),ref=Engine.integrate(f,a,b),ae=Math.abs(r.val-ref.v),re=ref.v!==0?ae/Math.abs(ref.v):NaN;$("nv4").textContent=r.n;last4={f,a,b,m,r,ref,ae};
+  const reliable=ref.err<1e-8;
+  $("res4").innerHTML=[["Approximation",n(r.val,10)],["Reference ∫f (adaptive Simpson)",n(ref.v,12)+(reliable?"":" ⚠")],["Absolute error",ae.toExponential(3)],["Relative error",isFinite(re)?re.toExponential(3):"—"],["Δx",n(r.h,6)],["n used",r.n+(m==="simp"&&r.n!==+$("n4r").value?" (Simpson needs even n)":"")]].map(([k,v])=>`<div>${k}<b>${v}</b></div>`).join("")+
+   `<div style="grid-column:1/3">${tex(FORM[m])}<br><small>Reference error estimate ≤ ${ref.err.toExponential(1)}${reliable?"":" — reference not reliable, errors are approximate"}</small></div>`;
+  const s=shape(f,a,b,r.n,m),xs=Array.from({length:401},(_,i)=>a+(b-a)*i/400);
+  Plotly.react("nplot",[{x:s.X,y:s.Y,fill:"toself",fillcolor:"rgba(6,214,160,.3)",line:{color:"#06d6a0",width:1},name:"approximation",type:"scatter"},{x:xs,y:xs.map(f),line:{color:"#4cc9f0",width:3},name:"f(x)",type:"scatter"}],PL,PC);
+  const ns=[2,4,8,16,32,64,128,256],names={left:"Riemann (left)",mid:"Midpoint",trap:"Trapezoid",simp:"Simpson"},cols={left:"#ff6b6b",mid:"#ffd166",trap:"#06d6a0",simp:"#4cc9f0"};
+  Plotly.react("cplot",Object.keys(names).map(k=>({x:ns,y:ns.map(q=>Math.max(Math.abs(Engine.numeric(f,a,b,q,k).val-ref.v),1e-17)),name:names[k],line:{color:cols[k],width:k===m?4:2},type:"scatter"})),{...PL,xaxis:{...PL.xaxis,type:"log",title:"n"},yaxis:{...PL.yaxis,type:"log",title:"|error|"}},PC)
+ }catch(e){mg.innerHTML=`<div class="err">${String(e.message||e)}</div>`}}
+let t4;["f4","a4","b4","m4","n4r"].forEach(i=>$(i).addEventListener("input",()=>{clearTimeout(t4);t4=setTimeout(compute4,150)}));
+
+/* ===== Phase 6: samples, compare, PDF ===== */
+let last1=null,last4=null;const EXP=[],Cc=Engine.compile;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const SAMPLES=[
+ {id:1,t:"Area between f=x² and g=x on [0,1]",mod:1,p:{f:"x^2",g:"x",a:"0",b:"1"},ref:1/6,refT:"1/6",run:()=>Engine.area(Cc("x^2"),Cc("x"),0,1).total},
+ {id:2,t:"Volume: rotate f=x² about the x-axis on [0,2]",mod:2,p:{f:"x^2",g:"0",a:"0",b:"2",ax:"x"},ref:32*Math.PI/5,refT:"32π/5",run:()=>Engine.volume(Cc("x^2"),Cc("0"),0,2,"x").V},
+ {id:3,t:"Volume: rotate the region between x and x² about the x-axis (they meet at 0 and 1)",mod:2,p:{f:"x",g:"x^2",a:"0",b:"1",ax:"x"},ref:2*Math.PI/15,refT:"2π/15",run:()=>Engine.volume(Cc("x"),Cc("x^2"),0,1,"x").V},
+ {id:4,t:"Integral of sin x on [0,π]",mod:4,p:{f:"sin(x)",a:"0",b:"π",m:"simp",n:8},ref:2,refT:"2",run:()=>Engine.integrate(Cc("sin(x)"),0,Math.PI).v}];
+function openSample(s){const P=s.p;
+ if(s.mod===1){["f","g","a","b"].forEach(k=>$(k).value=P[k]);show(1)}
+ else if(s.mod===2){$("f2").value=P.f;$("g2").value=P.g;$("a2").value=P.a;$("b2").value=P.b;$("ax").value=P.ax;$("deg").value=360;show(2)}
+ else{$("f4").value=P.f;$("a4").value=P.a;$("b4").value=P.b;$("m4").value=P.m;$("n4r").value=P.n;show(4)}}
+function verify(){$("verif").innerHTML=SAMPLES.map(s=>{try{const v=s.run(),d=Math.abs(v-s.ref),ok=d<=1e-8;return`<div class="test ${ok?"t-ok":"t-bad"}">${ok?"✔":"✘"} #${s.id}: engine ${n(v,12)} vs reference ${s.refT} = ${n(s.ref,12)} (|Δ| = ${d.toExponential(1)})</div>`}
+ catch(e){return`<div class="test t-bad">✘ #${s.id}: ${esc(e.message)}</div>`}}).join("")}
+function saveExp(kind){let e;
+ if(kind==="Area"){if(!last1)return;const{f,g,a,b,R}=last1;e={kind,f:f.src,g:g.src,a,b,opt:"—",val:R.total,err:R.err,note:R.roots.length+" intersection(s)"}}
+ else if(kind==="Volume"){if(!st)return;const{f,g,a,b,ax,R}=st,d=+$("deg").value;e={kind,f:f.src,g:g.src,a,b,opt:ax.toUpperCase()+"-axis, "+R.method+", "+d+" deg",val:R.V*d/360,err:R.err*d/360,note:"region area "+n(R.area,6)}}
+ else{if(!last4)return;const{f,a,b,m,r,ref,ae}=last4;e={kind,f:f.src,g:"—",a,b,opt:m+", n="+r.n,val:r.val,err:ae,note:"abs. error vs reference "+n(ref.v,10)}}
+ EXP.push(e);const bt=$(kind==="Area"?"sv1":kind==="Volume"?"sv2":"sv4"),o=bt.textContent;bt.textContent="Saved ✓ #"+EXP.length;setTimeout(()=>bt.textContent=o,1300)}
+$("sv1").onclick=()=>saveExp("Area");$("sv2").onclick=()=>saveExp("Volume");$("sv4").onclick=()=>saveExp("Numerical");
+function renderCmp(){const c=$("cmp");
+ if(!EXP.length){c.innerHTML='<div style="color:var(--mut);font-size:13px;margin:6px 0">No saved experiments yet. Use “Save to Compare” in the Area, Solid or Numerical modules (kept in memory for this session).</div>';try{Plotly.purge("cmpplot")}catch(_){}return}
+ const rows=EXP.map((e,i)=>{const f0=EXP.find(x=>x.kind===e.kind),d=e.val-f0.val;
+  return`<tr><td>${i+1}</td><td>${e.kind}</td><td>${esc(e.f)}</td><td>${esc(e.g)}</td><td>[${n(e.a,5)}, ${n(e.b,5)}]</td><td>${esc(e.opt)}</td><td>${n(e.val,10)}</td><td>${e.err.toExponential(1)}</td><td>${e===f0?"—":(d>=0?"+":"")+n(d,6)+(f0.val?" ("+n(100*d/f0.val,4)+"%)":"")}</td><td><button data-d="${i}">✕</button></td></tr>`}).join("");
+ c.innerHTML=`<div style="overflow-x:auto"><table><tr><th>#</th><th>Type</th><th>f(x)</th><th>g(x)</th><th>[a,b]</th><th>Setup</th><th>Result</th><th>Error</th><th>Δ vs first of type</th><th></th></tr>${rows}</table></div><button class="btn s" id="clr" style="margin-top:8px">Clear all</button>`;
+ c.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{EXP.splice(+b.dataset.d,1);renderCmp()});$("clr").onclick=()=>{EXP.length=0;renderCmp()};
+ const col={Area:"#4cc9f0",Volume:"#f72585",Numerical:"#06d6a0"};
+ Plotly.react("cmpplot",[{type:"bar",x:EXP.map((e,i)=>"#"+(i+1)+" "+e.kind),y:EXP.map(e=>e.val),marker:{color:EXP.map(e=>col[e.kind])}}],{...PL,yaxis:{...PL.yaxis,title:"result"}},PC)}
+function renderV5(){$("samples").innerHTML=SAMPLES.map(s=>`<div class="step"><b>${s.id}. ${esc(s.t)}</b><br><small>expected ${s.refT} ≈ ${n(s.ref,10)}</small> <button class="btn s" data-o="${s.id}" style="margin-top:0;padding:5px 10px">Open</button></div>`).join("");
+ $("samples").querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>openSample(SAMPLES[b.dataset.o-1]));verify();renderCmp()}
+$("runall").onclick=verify;
+/* ---- PDF (jsPDF, ASCII text) ---- */
+const asc=s=>String(s).replace(/π/g,"pi").replace(/√/g,"sqrt").replace(/[−–—]/g,"-").replace(/²/g,"^2").replace(/[^\x20-\x7E]/g,"?");
+const FA={left:"dx * sum_{i=0}^{n-1} f(x_i)",mid:"dx * sum_{i=0}^{n-1} f(x_i + dx/2)",trap:"(dx/2) [f(x0) + 2 sum_{i=1}^{n-1} f(x_i) + f(xn)]",simp:"(dx/3) [f0 + 4f1 + 2f2 + ... + 4f_{n-1} + f_n]"};
+const MN={left:"Riemann sum (left)",mid:"Midpoint rule",trap:"Trapezoidal rule",simp:"Simpson's rule"};
+const snap=async id=>{try{return await Plotly.toImage(id,{format:"png",width:900,height:420})}catch(_){return null}};
+async function makePDF(){const out=$("pmsg");out.className="";out.textContent="";
+ try{if(!window.jspdf)throw new Error("PDF library did not load (check the connection).");
+  if(!last1&&!st&&!last4&&!EXP.length)throw new Error("Run at least one experiment first, then generate the report.");
+  const dl=window.claude?await window.claude.use("downloads"):null;
+  const doc=new window.jspdf.jsPDF({unit:"pt",format:"a4"});let y=50;
+  const T=(s,sz=10,b=false,f="helvetica")=>{doc.setFont(f,b?"bold":"normal");doc.setFontSize(sz);for(const l of doc.splitTextToSize(asc(s),515)){if(y>790){doc.addPage();y=50}doc.text(l,40,y);y+=sz*1.4}};
+  const IMG=(u,w,hh)=>{if(!u)return;if(y+hh>800){doc.addPage();y=50}doc.setFillColor(11,18,38);doc.rect(40,y,w,hh,"F");doc.addImage(u,"PNG",40,y,w,hh);y+=hh+10};
+  const H=s=>{y+=8;T(s,13,true);y+=2};
+  T($("rt").value||"Integral Vision - Experiment Report",18,true);T("Generated "+new Date().toISOString().slice(0,10)+" by Integral Vision. All results are numerical (adaptive Simpson) unless stated; error values are estimates.",9);
+  if(last1){const{f,g,a,b,R}=last1;H("1. Area between curves");
+   T("f(x) = "+f.src+"    g(x) = "+g.src);T("Interval [a, b] = ["+n(a,8)+", "+n(b,8)+"]");T("Law: A = integral from a to b of |f(x) - g(x)| dx, split at the intersection points.");
+   T("Intersection points: "+(R.roots.length?R.roots.map(z=>n(z,8)).join(", "):"none inside the interval"));
+   R.pieces.forEach(p=>T("  ["+n(p.lo,6)+", "+n(p.hi,6)+"]: upper = "+p.up+", lower = "+p.low+", integral = "+n(p.val,10)));
+   T("Total area A = "+n(R.total,10)+"   (error estimate <= "+R.err.toExponential(1)+")",10,true);if(last1.ex&&last1.ex.ok)T("Analytical result (exact rational arithmetic): A = "+last1.ex.str,10,true);else T("Analytical result: not available for this input (numerical only).",9);IMG(await snap("plot"),500,233)}
+  if(st){const{f,g,a,b,ax,R}=st,d=+$("deg").value;H("2. Solid of revolution");
+   T("f(x) = "+f.src+"    g(x) = "+g.src+"    [a, b] = ["+n(a,8)+", "+n(b,8)+"]");T("Axis of rotation: "+ax.toUpperCase()+"-axis;  angle: "+d+" deg");
+   T("Method: "+(R.method==="disk"?"Disk. V = pi * integral [R(x)]^2 dx (inner radius is 0).":R.method==="washer"?"Washer. V = pi * integral [R(x)^2 - r(x)^2] dx (the region does not touch the axis).":R.method==="fold"?"Shell, folded: the region lies on both sides of the y-axis, so the solid is the union of both revolved sides (overlap counted once). V = 2 pi * integral rho |Y(rho)| d rho, rho = |x|.":"Shell (equivalent to disks in y). V = 2 pi * integral |x| |f(x) - g(x)| dx."));
+   if(ax==="x")R.pieces.forEach(p=>T("  ["+n(p.lo,6)+", "+n(p.hi,6)+"]: R = "+p.Rn+", r = "+p.rn+", piece volume = "+n(p.val,10)));
+   T("V (360 deg) = "+n(R.V,10)+" = "+n(R.V/Math.PI,10)+" pi   (error estimate <= "+R.err.toExponential(1)+")");T("V ("+d+" deg) = "+n(R.V*d/360,10),10,true);if(st.ex&&st.ex.ok)T("Analytical result (exact), V(360 deg) = "+st.ex.str,10,true);else T("Analytical result: not available for this input (numerical only).",9);T("Area of the generating region = "+n(R.area,10));
+   if(V3.r){draw3();const c=V3.r.domElement,w=Math.min(380,515),hh=w*c.height/c.width;IMG(c.toDataURL("image/png"),w,hh)}}
+  if(last4){const{f,a,b,m,r,ref,ae}=last4;H("3. Numerical integration");
+   T("f(x) = "+f.src+"    [a, b] = ["+n(a,8)+", "+n(b,8)+"]");T("Method: "+MN[m]+";  n = "+r.n+";  dx = "+n(r.h,8));T("Formula: "+FA[m]);
+   T("Approximation = "+n(r.val,12));T("Reference (adaptive Simpson, error <= "+ref.err.toExponential(1)+") = "+n(ref.v,12));
+   T("Absolute error = "+ae.toExponential(3)+";  relative error = "+(ref.v!==0?(ae/Math.abs(ref.v)).toExponential(3):"n/a"),10,true);IMG(await snap("nplot"),500,233);
+   T("Method comparison, |error| vs n:",10,true);const ks=["left","mid","trap","simp"];T("n".padEnd(6)+ks.map(k=>MN[k].slice(0,12).padEnd(14)).join(""),8,true,"courier");
+   [2,4,8,16,32,64,128,256].forEach(q=>T(String(q).padEnd(6)+ks.map(k=>Math.abs(Engine.numeric(f,a,b,q,k).val-ref.v).toExponential(3).padEnd(14)).join(""),8,false,"courier"));IMG(await snap("cplot"),500,233)}
+  if(EXP.length){H("4. Saved experiment comparison");EXP.forEach((e,i)=>T("#"+(i+1)+" "+e.kind+": f="+e.f+", g="+e.g+", ["+n(e.a,5)+", "+n(e.b,5)+"], "+e.opt+" -> result "+n(e.val,10)+" (error "+e.err.toExponential(1)+"); "+e.note))}
+  const N=doc.getNumberOfPages();for(let i=1;i<=N;i++){doc.setPage(i);doc.setFont("helvetica","normal");doc.setFontSize(8);doc.text("Integral Vision  |  page "+i+" / "+N,40,825)}
+  if(dl)await dl.save({filename:"integral-vision-report.pdf",data:doc.output("arraybuffer")});else doc.save("integral-vision-report.pdf");out.textContent="Report ready ✓"
+ }catch(e){out.className="err";out.textContent=e&&e.code==="declined"?"Save cancelled.":String(e.message||e)}}
+$("pdf").onclick=makePDF;
+
+/* ===== input helpers + diagnostics ===== */
+
+window.addEventListener("error",e=>{const d=$("diag");d.hidden=false;d.textContent="Script error: "+e.message});
+window.addEventListener("load",()=>{const miss=[["math","Math.js (equation parser)"],["Plotly","Plotly (2D plots)"],["katex","KaTeX (equations)"],["THREE","Three.js (3D)"],["jspdf","jsPDF (PDF)"]].filter(([k])=>typeof window[k]==="undefined").map(x=>x[1]);
+ if(miss.length){const d=$("diag");d.hidden=false;d.textContent="Could not load: "+miss.join(", ")+". Check your connection and reload."}});
+</script>
+<script>
+(function(){const q=id=>document.getElementById(id);
+const OPS=[["+","+"],["−","-"],["×","*"],["÷","/"],["^","^"],["(","("],[")",")"],["⌫","@back"],["✕","@clear"]],
+ FN=[["x","x"],["π","pi"],["eˣ","e^"],["sin","sin("],["cos","cos("],["tan","tan("],["ln","ln("],["√","sqrt("],["|x|","abs("]];
+const btn=(id,l,t,c)=>`<button type="button" class="${c}" data-for="${id}" data-ins="${t}">${l}</button>`;
+["f","g","f2","g2","f4"].forEach(id=>{const el=q(id);if(el)el.insertAdjacentHTML("afterend",'<div class="chips ops">'+OPS.map(o=>btn(id,o[0],o[1],"op")).join("")+'</div><div class="chips">'+FN.map(o=>btn(id,o[0],o[1],"")).join("")+"</div>")});
+document.querySelectorAll("[data-ins]").forEach(b=>b.onclick=()=>{const el=q(b.dataset.for),t=b.dataset.ins,v=el.value;
+ let s=el.selectionStart==null?v.length:el.selectionStart,e=el.selectionEnd==null?s:el.selectionEnd,nv,c;
+ if(t==="@clear"){nv="";c=0}
+ else if(t==="@back"){if(s===e&&s>0)s--;nv=v.slice(0,s)+v.slice(e);c=s}
+ else{nv=v.slice(0,s)+t+v.slice(e);c=s+t.length}
+ el.value=nv;try{el.focus({preventScroll:true});el.setSelectionRange(c,c)}catch(_){}
+ el.dispatchEvent(new Event("input",{bubbles:true}))})})();
+</script>
+</body></html>
